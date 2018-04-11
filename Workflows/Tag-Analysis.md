@@ -119,7 +119,7 @@ total # of seqs:	4283611
 It took 4 secs to summarize 4283611 sequences.
 ```
 
-Now aligning sequences to a reference alignment with `align.seqs`. We will be using Silva wiht the full-length sequences. I will align to the full database just because I'm not too familiar with this dataset, and this might be a different version of Silva. Will probably end up with the normal V4 region anyways, but again because of version issues not 100% sure. The full Silva NR database is about 10GB and that has been moved to `/home/emcdaniel/Databases/Silva.nr_v132` on the fileshare for easy access in the future. This will be moved to the current working directory where we are running mothur, and then use the reduced database with our region of interest for future runs.  
+Now aligning sequences to a reference alignment with `align.seqs`. We will be using Silva wiht the full-length sequences. I will align to the full database just because I'm not too familiar with this dataset, and this might be a different version of Silva. Will probably end up with the normal V4 region anyways, but again because of version issues not 100% sure. The full Silva NR database is about 10GB and that has been moved to `/home/emcdaniel/Databases/Silva.nr_v132` on the fileshare for easy access in the future. This will be moved to the current working directory where we are running mothur, and then use the reduced database with our region of interest for future runs. The Silva NR database used for this anlayses is the 132 release. 
 
 ```
 align.seqs(fasta=wintertags.good.good.unique.fasta, reference=silva.nr_v132.align, flip=T)
@@ -251,4 +251,33 @@ fasta: WinterTags.final.fasta
 count table: WinterTags.final.count_table
 ```
 
-After this we will cluster OTUs inside of mothur and get representative OTU sequences for final classification with TaxASS first and then GreenGenes. This will probably take a lot of time for the clustering and distance calculations. 
+After this we will cluster OTUs inside of mothur and get representative OTU sequences for final classification with TaxASS first and then GreenGenes. This will probably take a lot of time for the clustering and distance calculations.
+
+### Defining OTUs and performing distance calculations 
+
+Defining Operational Taxonomic Units (OTUs) = sequence proxy for a microbial species by calculating distance between sequences/how much they diverge, then cluster the distance calculations with a certain cutoff point. We will be using the following cutoffs as proxies for each delimiter: 
+
+- Species: 97% similar
+- Genus: 95% similar
+- Family: 90% similar
+
+```
+dist.seqs(fasta=WinterTags.final.fasta)
+```
+
+In the future when thinking about larger datasets, this function can have cutoffs set to decrease the distance matrix. 
+
+We will use the average neighbor clustering method. There are other ways to cluster OTUs, which Ananke does it temporally for time series analyses. We only have a couple of samples for winter months that aren't really "time-series," but this is something we can think about in the future. 
+
+```
+cluster.split(column=WinterTags.final.dist, count=WinterTags.final.count_table, method=average)
+``` 
+
+Important note - there is a bug in the mothur version on the VM, which is the newest version, so I did the clustering on my personal computer and that seemed to work fine. Surprisingly this didn't take forever, probably because we only have 9 samples and a really reduced amount of sequences. We can now continue with classification using TaxASS and then GreenGenes for whatever TaxASS doesn't hit. 
+
+The current files are now: 
+- `WinterTags.final.an.unique_list.list`
+- `WinterTags.final.count_table`
+- `WinterTags.final.dist` 
+
+Which are now on my personal computer and need to be moved back to the virutal machine for further analyses. 
