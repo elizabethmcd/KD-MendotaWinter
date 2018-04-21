@@ -19,7 +19,7 @@ library(phyloseq)
 # OTU table
 OTU = read.table("Data/WinterTags.final.an.unique_list.shared", header=TRUE, sep="\t")
 # Taxonomy of each OTU
-tax = read.table("Data/WinterTags.taxonomy.reformatted", header=FALSE, sep=";")
+tax = read.table("Data/WinterTags.final.an.unique_list.0.03.cons.taxonomy", header=FALSE, sep="\t")
 
 # Row names match
 row.names(OTU) = OTU$Group
@@ -27,3 +27,4 @@ row.names(OTU) = OTU$Group
 OTU.clean = OTU[,-which(names(OTU) %in% c("lablel", "numOtus", "Group"))]
 # Taxonomy table
 row.names(tax) =tax$OTU
+tax.clean = tax[row.names(tax) %in% colnames(OTU.clean),]
