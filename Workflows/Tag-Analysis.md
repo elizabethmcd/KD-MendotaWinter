@@ -276,8 +276,59 @@ cluster.split(column=WinterTags.final.dist, count=WinterTags.final.count_table, 
 Important note - there is a bug in the mothur version on the VM, which is the newest version, so I did the clustering on my personal computer and that seemed to work fine. Surprisingly this didn't take forever, probably because we only have 9 samples and a really reduced amount of sequences. We can now continue with classification using TaxASS and then GreenGenes for whatever TaxASS doesn't hit. 
 
 The current files are now: 
+
 - `WinterTags.final.an.unique_list.list`
 - `WinterTags.final.count_table`
 - `WinterTags.final.dist` 
+- `WinterTags.final.fasta`
 
-Which are now on my personal computer and need to be moved back to the virutal machine for further analyses. 
+Which are now on my personal computer and need to be moved back to the virtual machine for further analyses. 
+
+### Friday 2018-04-20
+
+Now classifying the OTUs using a combination of greengenes and blast to identify with the Freshwater Training Set using TaxASS and Robin's scripts. The first thing is to make a BLAST database of the Freshwater Training set. I pulled the fasta file off of Ben's database folder of the fileshare, and I will have a copy myself. The command: 
+
+```
+makeblastdb -dbtype nucl -in FWonly_11Feb2016_1452_ready.fasta -input_type fasta -parse_seqids -out FWonly_11Feb2016_1452_ready.fasta.db
+```
+
+This creates a lot of database files for BLAST to use when searching our sets against the freshwater training set, and then parsing the percent identities to see if it's a good hit with the freshwater training set, or it should be classified with another reference set. Then blast against the freshwater database. First hyphens should be completely removed  and smooshed together with `sed -e 's/-//g' WinterTags.final.fasta > WinterTags.nohyph.fasta`
+
+Then query the FW database and reformat the blast results: 
+
+```
+blastn -query WinterTags.final.fasta -task megablast -db FW_only11Feb2016_1452_ready.fasta.db -out WinterOTU.custom.blast -outfmt 11 -max_target_seqs 5
+# reformat
+blast_formatter -archive WinterOTU.custom.blast -outfmt "6 qseqid pident length qlen qstart qend" -out WinterOTU.custom.blast.table
+```
+
+Then using Robin's set of scripts to calculate full length PIDent, pull out sequence IDs greater than and less than 98%, some sanity plots in R. Steps for using Robin's Rscripts: 
+
+```
+# calculate full length 
+Rscript calc_full_length_pident.R OTU.custom.blast.table OTU.custom.blast.table.modified
+# above 98 match
+Rscript filter_seqIDs_by_pident.R OTU.custom.blast.table.modified ids.above.98 98 TRUE
+# below 98
+Rscript filter_seqIDs_by_pident.R OTU.custom.blast.table.modified ids.below.98 98 FALSE
+# pull out OTUs that hit nothing on blast
+python find_seqIDs_blast_removed.py 5M.fasta OTU.custom.blast.table.modified ids.missing
+# combine list of seequence IDs that didn't hit anythign on blast with those that had pident below 98
+cat ids.below.98 ids.missing > ids.below.98.all
+# create fasta file with sequences that correspond to each group
+python create_fastas_given_seqIDs.py ids.above.98 fasta above.fasta
+python create_fastas_given_seqIDs.py ids.below.98.all fasta below.fasta
+```
+
+Now the different fasta files are setup to classify the groups of OTUs using mothur with the two different databases. Sequences with a pident above 98 are classified using the FW database. And sequences below 98 are classified using the Greengenes database within mothur. The fasta and taxonomy files for both the freshwater database and Greengenes. 
+
+Within mothur for both classifications: 
+
+```
+classify.seqs(fasta=WinterTags.above.98.fasta, template=FWonly_11Feb2016_1452_ready.fasta, taxonomy=FWonly_11Feb2016_1452.taxonomy, method=wang, probs=T, processors=10)
+classify.seqs(fasta=WinterTags.below.98.fasta, template=../Gg.fasta, taxonomy=Gg.taxonomy, method=wang, probs=T. processors=10)
+```
+
+From a first glance, it doesn't take too terribly long to generate/search the FW database, but it takes a while to go through the GreenGenes database and search it, because it's a larger database and probably takes a bit more time to sift through. GreenGenes contains incomplete 16S sequences and therefore isn't good for alignment purposes, but in terms of classification purposes is more promiscuous for identifying uncultured taxa. 
+
+Thinking about the input files for downstream R analyses and data exploration, you give it a unique list or shared file and the taxonomy file. So once greengenes is done running, concatenate the Greengenes and FW classifications, and give it the unique list table of OTUs. 
