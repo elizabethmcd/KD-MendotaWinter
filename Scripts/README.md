@@ -9,6 +9,7 @@
 - `plot_blast_hits_stats.R`: TaxASS script for sanity check plots
 - `convert_shared_file.R`: Ben Peterson's script for converting the shared file to a relative abundance table
 - `get-representative-seqs.R`: Modification of Alex Linz's script for pulling out representative sequences for each OTU and making a representative FASTA file
+- `WinterTagsAn.R`: downstream data exploration script
 
 
 
