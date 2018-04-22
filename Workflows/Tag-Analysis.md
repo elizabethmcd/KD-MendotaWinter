@@ -332,3 +332,28 @@ classify.seqs(fasta=WinterTags.below.98.fasta, template=../Gg.fasta, taxonomy=Gg
 From a first glance, it doesn't take too terribly long to generate/search the FW database, but it takes a while to go through the GreenGenes database and search it, because it's a larger database and probably takes a bit more time to sift through. GreenGenes contains incomplete 16S sequences and therefore isn't good for alignment purposes, but in terms of classification purposes is more promiscuous for identifying uncultured taxa. 
 
 Thinking about the input files for downstream R analyses and data exploration, you give it a unique list or shared file and the taxonomy file. So once greengenes is done running, concatenate the Greengenes and FW classifications, and give it the unique list table of OTUs. 
+
+Also reformat the taxonomy file so delimited by semicolons: `sed 's/[[:blank:]]/\;/' <5M.taxonomy > 5M.taxonomy.reformatted` or `sed 's/[[:blank:]]/\;/' <WinterTags.taxonomy> > WinterTags.taxonomy.reformatted`. 
+
+### Saturday 2018-04-21
+
+Problem I have now run into that I didn't realize is that I should've normalized the list table and that is what is used to put into R. I either didn't save the shared table or didn't make it because it was near the normal classification steps. But I still have the final count table and the final list file, so that should be easy to make the shared table, which is what they use for rarefaction and normalization steps. To make the shared file within mothur: 
+
+```
+mothur > make.shared(list=WinterTags.final.an.unique_list.list, count=WinterTags.final.count_table, label=0.03)
+```
+
+This will give us the species level OTUs, although can you really identify species level at OTU I think not. However something is wrong with the current list file, which is generated from the `cluster.split` command. Can go back and regenerate that with: 
+
+```
+mothur > cluster.split(column=WinterTags.final.dist, count=WinterTags.final.count_table, method=average)
+```
+
+This is where I had issues with the newest version of mothur and had to do things on my local computer and that version of mothur. So try regenerating that file. 
+
+Just realized that we forgot to run the classify.otu script that will turn the taxonomy file into a list of OTUs and not the sequence headers, and that's what is similar between the shared file and the taxonomy file. That command is: 
+
+```
+mothur > classify.otu(list=WinterTags.final.an.unique_list.list, taxonomy=WinterTags.taxonomy, count=WinterTags.final.count_table, label=0.03, cutoff=80, basis=otu, probs=F)
+# reformat
+sed 's/[[:blank:]]/\;/' WinterTags.final.an.unique_list.0.03.cons.taxonomy > WinterTags.taxonomyOTUs.reformatted
