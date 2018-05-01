@@ -357,3 +357,16 @@ Just realized that we forgot to run the classify.otu script that will turn the t
 mothur > classify.otu(list=WinterTags.final.an.unique_list.list, taxonomy=WinterTags.taxonomy, count=WinterTags.final.count_table, label=0.03, cutoff=80, basis=otu, probs=F)
 # reformat
 sed 's/[[:blank:]]/\;/' WinterTags.final.an.unique_list.0.03.cons.taxonomy > WinterTags.taxonomyOTUs.reformatted
+```
+
+To make a phylogenetic tree of OTUs, need to pull out representative sequences for each OTU. This tree is also needed for further statistics and plotting in R. For getting representative sequences, you can either calculate the best possible representative sequence fo reach OTU with the smallest maximum distance to the other sequences in an OTU group, or choose the most abundant unique sequence within each OTU group as the representative - this runs much faster and with less RAM than the other method, not the best for all uniques within an OTU. So I will run the most abundant one for now: 
+
+```
+mothur > get.oturep(list=WinterTags.final.an.unique_list.list, fasta=WinterTags.final.fasta, count=WinterTags.final.count_table, label=0.03, method=abundance)
+```
+
+Now there is the problem of sequences not being in the list file and the count file, so regenerate the list file by redoing the distance matrix and whatnot. Which I thought I already did this with the distance file, but it might be because I did some of this with different versions of mothur. 
+
+Ok so it looks like I have to re-run everything because something is very wrong with the generated count table and I don't know which step that happened at. I am starting from the very beginning of the preprocessing steps and starting with the raw fastq files. So before the classification steps, make sure the representative OTUs can be pulled out correctly before going through all that mess. 
+
+

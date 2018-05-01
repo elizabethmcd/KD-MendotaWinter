@@ -16,17 +16,24 @@ library(VennDiagram)
 library(phyloseq)
 library(stringr)
 library(OTUtable)
+library(tidyr)
+library(magrittr)
 
 # Import data
 # OTU table
 OTU = read.table("Data/WinterTags.final.shared", header=TRUE, sep="\t")
 # Taxonomy of each OTU
 tax = read.table("Data/WinterTags.OTU.taxonomy", header=TRUE, sep="\t")
+# Sample data
+meta = read.table("Data/sample-metadata.txt", header=TRUE, row.names=1, sep="\t")
+meta.UF = sample_data(meta)
+
 
 # Row names match
 row.names(OTU) = OTU$Group
+sample_id <- OTU[,2]
 # Remove label, numOTUs, Group columns, not OTU counts
-OTU.clean = OTU[,-which(names(OTU) %in% c("label", "numOtus", "Group", "X"))]
+OTU.clean = OTU[,-which(names(OTU) %in% c("label", "Group", "numOtus", "X"))]
 # Taxonomy table
 row.names(tax) =tax$OTU
 tax.clean = tax[row.names(tax) %in% colnames(OTU.clean),]
@@ -43,11 +50,30 @@ row.names(tax.clean) = tax.clean$OTU
 # make phyloseq object to combine taxonomy and OTU tables
 OTU.UF = otu_table(as.matrix(OTU.clean), taxa_are_rows=FALSE)
 tax.UF = tax_table(as.matrix(tax.clean))
+
 # Calculate a rooted phylogenetic tree
 seqs <- read.dna("Data/WinterTag-repseqs.fasta", format="fasta")
 d <- dist.dna(seqs, model="raw")
 tree <- nj(d)
-physeq = phyloseq(OTU.UF, tax.UF, tree)
+
+# Phyloseq object
+physeq = phyloseq(OTU.UF, tax.UF, meta.UF, tree)
+
 
 # Visualizations
-plot_bar(physeq, fill="Phylum") + geom_bar(aes(color=Phylum, fill=Phylum), stat="identity", position="stack")
+# All Phyla
+plot_bar(physeq, fill="Phylum", x="Date") + geom_bar(aes(color=Phylum, fill=Phylum), stat="identity", position="stack")
+# Subset by Actinobacteria
+subset <- subset_taxa(physeq, Phylum=="Actinobacteria")
+plot_bar(subset, fill="Family", x="Date")
+
+# Plot the 10 most abundant taxa in heatmap by Family
+gpt <- prune_taxa(names(sort(taxa_sums(physeq), TRUE)[1:10]), physeq)
+plot_heatmap(gpt, sample.label="Date", taxa.label="Family", sample.order="Date")
+?plot_heatmap
+rank_names(physeq)
+
+# Ordinations
+
+
+# Save plots

@@ -62,3 +62,5 @@ for(i in 1:length(cand)){
 write.table(new_fasta, file="WinterTag-repseqs.fasta", quote = F, row.names = F, col.names = F)
 
 # This gives a FASTA file with gaps for calculating distances matrix with OTUs are the representative sequences, and get the tree file for phyloseq
+
+

@@ -16,6 +16,16 @@ First run `fastq.info` on each fastq file to generate pairs of fasta and quality
 make.group(fasta=ERR1547084_1.fasta-ERR1547102_1.fasta-ERR1547116_1.fasta-ERR1547121_1.fasta-ERR1547062_1.fasta-ERR1547087_1.fasta-ERR1547108_1.fasta-ERR1547117_1.fasta-ERR1547126_1.fasta, groups=A-B-C-D-E-F-G-H-J)
 ```
 
+- A = ERR1547084_1.fasta = 2001-01-17
+- B = ERR1547102_1.fasta = 2009-02-24
+- C = ERR1547116_1.fasta = 2002-02-28
+- D = ERR1547121_1.fasta = 2010-01-29
+- E = ERR1547062_1.fasta = 2005-02-11
+- F = ERR1547087_1.fasta = 2011-01-19
+- G = ERR1547108_1.fasta = 2010-02-26
+- H = ERR1547117_1.fasta = 2011-02-28
+- J = ERR1547126_1.fasta = 2010-12-03
+
 Screen the sequences: 
 ```
 screen.seqs(fasta=wintertags.fasta, group=current, maxambig=0, maxlength=300, maxhomop=8)
