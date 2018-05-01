@@ -59,21 +59,45 @@ tree <- nj(d)
 # Phyloseq object
 physeq = phyloseq(OTU.UF, tax.UF, meta.UF, tree)
 
-
 # Visualizations
 # All Phyla
-plot_bar(physeq, fill="Phylum", x="Date") + geom_bar(aes(color=Phylum, fill=Phylum), stat="identity", position="stack")
+p1 <- plot_bar(physeq, fill="Phylum", x="Date") + geom_bar(aes(color=Phylum, fill=Phylum), stat="identity", position="stack")
 # Subset by Actinobacteria
 subset <- subset_taxa(physeq, Phylum=="Actinobacteria")
-plot_bar(subset, fill="Family", x="Date")
+p2 <- plot_bar(subset, fill="Family", x="Date")
 
 # Plot the 10 most abundant taxa in heatmap by Family
-gpt <- prune_taxa(names(sort(taxa_sums(physeq), TRUE)[1:10]), physeq)
-plot_heatmap(gpt, sample.label="Date", taxa.label="Family", sample.order="Date")
-?plot_heatmap
-rank_names(physeq)
+fam <- prune_taxa(names(sort(taxa_sums(physeq), TRUE)[1:10]), physeq)
+p3 <- plot_heatmap(fam, sample.label="Date", taxa.label="Family", sample.order="Date")
 
-# Ordinations
+# Ordinations with abundant phyla
+phylum.sum = tapply(taxa_sums(physeq), tax_table(physeq)[, "Phylum"], sum, na.rm=TRUE)
+top5phyla = names(sort(phylum.sum, TRUE))[1:5]
+phys = prune_taxa((tax_table(physeq)[, "Phylum"] %in% top5phyla), physeq)
+phy.ord <- ordinate(phys, method="NMDS", distance="bray")
+p4 = plot_ordination(phys, phy.ord, type="taxa", color="Phylum", title="taxa")
+p4
+p4 <- p4 + facet_wrap(~Phylum, 3)
 
+# Plot by sample of abundant phyla
+# Mapping colors onto variables doesn't work with only one variable, add a dummy column to the sample_data
+# NMDS for correspondance/variance between objects in an ordination, represents the pairwise dissimilarity between objects in low-dimensional space, where points represent objects/samples, more similar are closer together, axes are arbitrary as also is the ordination
+no = plot_ordination(phys, phy.ord, type="samples", color="Date")
+no
+# split graphic where samples/OTUs separated
+# Plot of ordination of most abundant phyla and give a visualization of beta-diversity at the phylum level
+p5 = plot_ordination(phys, phy.ord, type="split", color="Phylum", label="Date")
+p5
+
+# Statistically test beta=diversity
+BC.dist = vegdist(OTU.clean, distance="bray")
+anosim(BC.dist, meta$Date, permutations=6000)
+# no significant difference between OTUs of samples
 
 # Save plots
+# All phyla
+ggsave("WinterTags-all-phyla.png", plot=p1)
+ggsave("WinterTags-Actino.png", plot=p2)
+ggsave("WinterTags-Actino-abundance.png", plot=p3)
+ggsave("WinterTags-ord-phyla.png", plot=p4)
+ggsave("WinterTags-sample-ord-phyla.png", plot=p5)
